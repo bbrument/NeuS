@@ -18,7 +18,7 @@ from models.renderer import NeuSRenderer
 
 
 class Runner:
-    def __init__(self, conf_path, mode='train', case='CASE_NAME', is_continue=False):
+    def __init__(self, conf_path, mode='train', case='CASE_NAME', is_continue=False, nb_iter=0):
         self.device = torch.device('cuda')
 
         # Configuration
@@ -36,7 +36,7 @@ class Runner:
         self.iter_step = 0
 
         # Training parameters
-        self.end_iter = self.conf.get_int('train.end_iter')
+        self.end_iter = nb_iter
         self.save_freq = self.conf.get_int('train.save_freq')
         self.report_freq = self.conf.get_int('train.report_freq')
         self.val_freq = self.conf.get_int('train.val_freq')
@@ -382,14 +382,16 @@ if __name__ == '__main__':
     parser.add_argument('--is_continue', default=False, action="store_true")
     parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--case', type=str, default='')
+    parser.add_argument('--nb_iter', type=int, default=0)
 
     args = parser.parse_args()
 
     torch.cuda.set_device(args.gpu)
-    runner = Runner(args.conf, args.mode, args.case, args.is_continue)
+    runner = Runner(args.conf, args.mode, args.case, args.is_continue, args.nb_iter)
 
     if args.mode == 'train':
         runner.train()
+        runner.validate_mesh(world_space=True, resolution=512, threshold=args.mcube_threshold)
     elif args.mode == 'validate_mesh':
         runner.validate_mesh(world_space=True, resolution=512, threshold=args.mcube_threshold)
     elif args.mode.startswith('interpolate'):  # Interpolate views given two image indices

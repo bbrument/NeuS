@@ -52,9 +52,19 @@ class Dataset:
         self.camera_dict = camera_dict
         self.images_lis = sorted(glob(os.path.join(self.data_dir, 'image/*.png')))
         self.n_images = len(self.images_lis)
-        self.images_np = np.stack([cv.imread(im_name) for im_name in self.images_lis]) / 256.0
+        self.images_np = np.stack([cv.imread(im_name, cv.IMREAD_UNCHANGED) for im_name in self.images_lis])
+        if self.images_np.dtype == "uint8":
+            bit_depth = 255.0
+        if self.images_np.dtype == "uint16":
+            bit_depth = 65535.0
+        self.images_np = self.images_np.astype(np.float32) / bit_depth
         self.masks_lis = sorted(glob(os.path.join(self.data_dir, 'mask/*.png')))
-        self.masks_np = np.stack([cv.imread(im_name) for im_name in self.masks_lis]) / 256.0
+        self.masks_np = np.stack([cv.imread(im_name) for im_name in self.masks_lis])
+        if self.masks_np.dtype == "uint8":
+            bit_depth = 255.0
+        if self.masks_np.dtype == "uint16":
+            bit_depth = 65535.0
+        self.masks_np = self.masks_np.astype(np.float32) / bit_depth
 
         # world_mat is a projection matrix from world to image
         self.world_mats_np = [camera_dict['world_mat_%d' % idx].astype(np.float32) for idx in range(self.n_images)]
